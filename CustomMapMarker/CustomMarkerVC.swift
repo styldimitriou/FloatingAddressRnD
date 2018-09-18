@@ -123,6 +123,17 @@ class CustomMarkerVC: UIViewController {
         return firstFrame.intersects(secondFrame)
     }
     
+    func findAboveMarkerPin(_ mapView: GMSMapView) -> GMSMarker {
+        let pickupCenterPoint = mapView.projection.point(for: pickup.position)
+        let dropoffCenterPoint = mapView.projection.point(for: dropoff.position)
+        
+        if pickupCenterPoint.y < dropoffCenterPoint.y {
+            return pickup
+        } else {
+            return dropoff
+        }
+    }
+    
     func getRespectAddressFrame(_ mapView: GMSMapView, forMarker marker: GMSMarker) -> CGRect {
         
         guard let iconView = marker.iconView else {
@@ -206,7 +217,7 @@ class CustomMarkerVC: UIViewController {
         return CGRect(x: markerCenterPoint.x - pinFrame.width/2, y: markerCenterPoint.y - pinFrame.height/2, width: pinFrame.width, height: pinFrame.height)
     }
     
-    func animateAddressIfNeeded(_ mapView: GMSMapView) {
+    func animateAddressIfNeeded(_ mapView: GMSMapView, _ aboveMarkerPin: GMSMarker) {
         
         let pickupAddrFrame = getRespectAddressFrame(mapView, forMarker: pickup)
         let dropoffAddrFrame = getRespectAddressFrame(mapView, forMarker: dropoff)
@@ -214,40 +225,62 @@ class CustomMarkerVC: UIViewController {
         let dropoffPinFrame = getRespectPinFrame(mapView, forMarker: dropoff)
         
         // Check for intersection between pin view and address view
-        if framesIntersect(pickupPinFrame, dropoffAddrFrame) {
-            pickup.zIndex = .min
-            dropoff.zIndex = .max
-        } else if framesIntersect(dropoffPinFrame, pickupAddrFrame) {
-            dropoff.zIndex = .min
-            pickup.zIndex = .max
+        if framesIntersect(pickupPinFrame, dropoffAddrFrame) || framesIntersect(dropoffPinFrame, pickupAddrFrame) || framesIntersect(pickupPinFrame, dropoffPinFrame) || framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
+            if aboveMarkerPin == pickup && pickupAddrPosition != .topLeft && pickupAddrPosition != .topRight {
+                let newPosition = getDiametricalPosition(pickupAddrPosition)
+                let animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
+                animateAddressTo(animationPoint, for: pickup)
+                pickupAddrPosition = newPosition
+            }
+            
+            if aboveMarkerPin == pickup && dropoffAddrPosition != .bottomRight && dropoffAddrPosition != .bottomLeft {
+                let newPosition = getDiametricalPosition(dropoffAddrPosition)
+                let animationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
+                animateAddressTo(animationPoint, for: dropoff)
+                dropoffAddrPosition = newPosition
+            }
+            
+            if aboveMarkerPin == dropoff && pickupAddrPosition != .bottomLeft && pickupAddrPosition != .bottomRight {
+                let newPosition = getDiametricalPosition(pickupAddrPosition)
+                let animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
+                animateAddressTo(animationPoint, for: pickup)
+                pickupAddrPosition = newPosition
+            }
+            
+            if aboveMarkerPin == dropoff && dropoffAddrPosition != .topRight && dropoffAddrPosition != .topLeft {
+                let newPosition = getDiametricalPosition(dropoffAddrPosition)
+                let animationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
+                animateAddressTo(animationPoint, for: dropoff)
+                dropoffAddrPosition = newPosition
+            }
         }
         
         // Check for intersection between address views
-        if framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
-            print("Intersection detected!!!")
-            // TODO: Animate address(es) so that they don't intersect
-            
-            // Find proper position for dropoff (keep pickup current position)
-            if let newPosition = hasProperAddrPosition(for: dropoffAddrPosition, pickupAddrFrame, dropoffAddrFrame) {
-                let animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
-                animateAddressTo(animationPoint, for: dropoff)
-                dropoffAddrPosition = newPosition
-            } else {
-                // If not begin iteration
-                for position in positionsArray {
-                    if position != pickupAddrPosition {
-                        if let newPosition = hasProperAddrPosition(for: position, pickupAddrFrame, dropoffAddrFrame) {
-                            let pickupAnimationPoint = position.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
-                            animateAddressTo(pickupAnimationPoint, for: pickup)
-                            pickupAddrPosition = position
-                            let dropoffAnimationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
-                            animateAddressTo(dropoffAnimationPoint, for: dropoff)
-                            dropoffAddrPosition = newPosition
-                        }
-                    }
-                }
-            }
-        }
+//        if framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
+//            print("Intersection detected!!!")
+//            // TODO: Animate address(es) so that they don't intersect
+//
+//            // Find proper position for dropoff (keep pickup current position)
+//            if let newPosition = hasProperAddrPosition(for: dropoffAddrPosition, pickupAddrFrame, dropoffAddrFrame) {
+//                let animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
+//                animateAddressTo(animationPoint, for: dropoff)
+//                dropoffAddrPosition = newPosition
+//            } else {
+//                // If not begin iteration
+//                for position in positionsArray {
+//                    if position != pickupAddrPosition {
+//                        if let newPosition = hasProperAddrPosition(for: position, pickupAddrFrame, dropoffAddrFrame) {
+//                            let pickupAnimationPoint = position.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
+//                            animateAddressTo(pickupAnimationPoint, for: pickup)
+//                            pickupAddrPosition = position
+//                            let dropoffAnimationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
+//                            animateAddressTo(dropoffAnimationPoint, for: dropoff)
+//                            dropoffAddrPosition = newPosition
+//                        }
+//                    }
+//                }
+//            }
+//        }
         
         if !self.view.frame.contains(pickupAddrFrame) {
             pickupAddrPosition = getAnimationFinalPosition(for: pickupAddrPosition, pickupAddrFrame)
@@ -323,6 +356,19 @@ class CustomMarkerVC: UIViewController {
         return newPosition
     }
     
+    func getDiametricalPosition(_ currentPosition: Position) -> Position {
+        switch currentPosition {
+        case .topLeft:
+            return .bottomLeft
+        case .topRight:
+            return .bottomRight
+        case .bottomLeft:
+            return .topLeft
+        case .bottomRight:
+            return .topRight
+        }
+    }
+    
     func animateAddressTo(_ point: CGPoint, for marker: GMSMarker) {
         if let backView = marker.iconView {
             let subViews = backView.subviews
@@ -342,39 +388,12 @@ extension CustomMarkerVC: GMSMapViewDelegate {
         return UIView()
     }
     
-//    func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
-//
-//        if let backView = marker.iconView {
-//            let subViews = backView.subviews
-//            for view in subViews {
-//                if view.tag == 2 {
-//                    var x: CGFloat = 0.0
-//                    var y: CGFloat = 0.0
-//                    if view.frame.origin.y == 0 {
-//                        x = view.frame.origin.x
-//                        y = backView.frame.height - view.frame.height
-//                    }
-//                    if view.frame.origin.x == view.frame.width &&  view.frame.origin.y != 0 {
-//                        y = view.frame.height
-//                    }
-//                    if view.frame.origin.x == 0 && view.frame.origin.y != 0 {
-//                        x = backView.frame.width - view.frame.width
-//                        y = view.frame.height
-//                    }
-//                    if view.frame.origin.x != 0 && view.frame.origin.y == view.frame.height {
-//                        x = view.frame.width
-//                    }
-//
-//                    UIView.animate(withDuration: 0.5, animations: {
-//                        view.frame = CGRect(x: x, y: y, width: view.frame.width, height: view.frame.height)
-//                    })
-//                }
-//            }
-//        }
-//        return true
-//    }
+    func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
+        return true
+    }
     
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
-        animateAddressIfNeeded(mapView)
+        let aboveMarkerPin = findAboveMarkerPin(mapView)
+        animateAddressIfNeeded(mapView, aboveMarkerPin)
     }
 }
