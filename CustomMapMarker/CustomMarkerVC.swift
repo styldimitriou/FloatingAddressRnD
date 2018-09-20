@@ -115,6 +115,15 @@ class CustomMarkerVC: UIViewController {
         return backView
     }
     
+    func frameOutOfScreenBounds(_ frame: CGRect) -> Bool {
+        
+        if self.view.frame.contains(frame) {
+            return false
+        } else {
+            return true
+        }
+    }
+    
     func framesIntersect(_ firstFrame: CGRect, _ secondFrame: CGRect) -> Bool {
         
         guard firstFrame != CGRect.zero, secondFrame != CGRect.zero else {
@@ -124,26 +133,14 @@ class CustomMarkerVC: UIViewController {
         return firstFrame.intersects(secondFrame)
     }
     
-    func findAboveMarkerPin(_ mapView: GMSMapView) {
-        let pickupCenterPoint = mapView.projection.point(for: pickup.position)
-        let dropoffCenterPoint = mapView.projection.point(for: dropoff.position)
+    func getRespectiveAddressViewFrame(_ mapView: GMSMapView, forMarker marker: GMSMarker) -> CGRect {
         
-        if pickupCenterPoint.y < dropoffCenterPoint.y {
-            aboveMarkerPin = pickup
-        } else {
-            aboveMarkerPin = dropoff
-        }
-    }
-    
-    func getRespectAddressFrame(_ mapView: GMSMapView, forMarker marker: GMSMarker) -> CGRect {
-        
-        guard let iconView = marker.iconView else {
+        guard let iconView = marker.iconView, let addressViewFrame = iconView.subviews.first?.frame else {
             return CGRect.zero
         }
         
         let markerCenterPoint = mapView.projection.point(for: marker.position)
         
-        let addressViewFrame = iconView.subviews[0].frame
         var offsetX: CGFloat = 0.0
         var offsetY: CGFloat = 0.0
         
@@ -170,7 +167,7 @@ class CustomMarkerVC: UIViewController {
         return CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
     }
     
-    func getNewAddressFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position) -> CGRect {
+    func getFutureAddressViewFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position) -> CGRect {
         
         var backViewOrigin: CGPoint = CGPoint.zero
         var newFrame: CGRect = CGRect.zero
@@ -206,7 +203,7 @@ class CustomMarkerVC: UIViewController {
         return newFrame
     }
     
-    func getRespectPinFrame(_ mapView: GMSMapView, forMarker marker: GMSMarker) -> CGRect {
+    func getRespectivePinFrame(_ mapView: GMSMapView, forMarker marker: GMSMarker) -> CGRect {
     
         guard let iconView = marker.iconView else {
             return CGRect.zero
@@ -218,201 +215,56 @@ class CustomMarkerVC: UIViewController {
         return CGRect(x: markerCenterPoint.x - pinFrame.width/2, y: markerCenterPoint.y - pinFrame.height/2, width: pinFrame.width, height: pinFrame.height)
     }
     
-    func animateAddressIfNeeded(_ mapView: GMSMapView) {
+    func animateAddressViewsIfNeeded(_ mapView: GMSMapView) {
         
-        let pickupAddrFrame = getRespectAddressFrame(mapView, forMarker: pickup)
-        let dropoffAddrFrame = getRespectAddressFrame(mapView, forMarker: dropoff)
-        let pickupPinFrame = getRespectPinFrame(mapView, forMarker: pickup)
-        let dropoffPinFrame = getRespectPinFrame(mapView, forMarker: dropoff)
+        var pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+        var dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+        let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
+        let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
         
-        // Check for intersection between pin view and address view
-        checkForIntersections(pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame)
+        var currentPickupAddrPosition: Position = pickupAddrPosition
+        var currentDropoffAddrPosition: Position = dropoffAddrPosition
         
-        // Check if address view is out of superview bounds (i.e.: of the screen)
-        if let newPosition = checkForOutOfBounds(pickupAddrFrame, pickupAddrPosition, pickup) {
-            pickupAddrPosition = newPosition
+        if shouldAnimateAddressViews(pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame) {
+            outerLoop: for newPickupAddrPosition in positionsArray {
+                pickupAddrFrame = getFutureAddressViewFrame(for: pickupAddrFrame, currentPickupAddrPosition, newPickupAddrPosition)
+                currentPickupAddrPosition = newPickupAddrPosition
+                for newDropoffAddrPosition in positionsArray {
+                    dropoffAddrFrame = getFutureAddressViewFrame(for: dropoffAddrFrame, currentDropoffAddrPosition, newDropoffAddrPosition)
+                    currentDropoffAddrPosition = newDropoffAddrPosition
+                    if !shouldAnimateAddressViews(pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame) {
+                        animateAddressTo(newPickupAddrPosition, pickupAddrFrame, pickup)
+                        animateAddressTo(newDropoffAddrPosition, dropoffAddrFrame, dropoff)
+                        pickupAddrPosition = newPickupAddrPosition
+                        dropoffAddrPosition = newDropoffAddrPosition
+                        break outerLoop
+                    }
+                }
+            }
         }
-        
-        if let newPosition = checkForOutOfBounds(dropoffAddrFrame, dropoffAddrPosition, dropoff) {
-            dropoffAddrPosition = newPosition
-        }
-        
-//        if !self.view.frame.contains(pickupAddrFrame) {
-//            pickupAddrPosition = getAnimationFinalPosition(for: pickupAddrPosition, pickupAddrFrame)
-//            let animationPoint = pickupAddrPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
-//            animateAddressTo(animationPoint, for: pickup)
-//            print("Pickup position: \(pickupAddrPosition.rawValue) --- Dropoff position: \(dropoffAddrPosition.rawValue)")
-//        }
-//
-//        if !self.view.frame.contains(dropoffAddrFrame) {
-//            dropoffAddrPosition = getAnimationFinalPosition(for: dropoffAddrPosition, dropoffAddrFrame)
-//            let animationPoint = dropoffAddrPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
-//            animateAddressTo(animationPoint, for: dropoff)
-//            print("Pickup position: \(pickupAddrPosition.rawValue) --- Dropoff position: \(dropoffAddrPosition.rawValue)")
-//        }
     }
     
-    func checkForOutOfBounds(_ frame: CGRect, _ position: Position, _ marker: GMSMarker) -> Position? {
-        if !self.view.frame.contains(frame) {
-            let newPosition = getAnimationFinalPosition(for: position, frame)
-            let animationPoint = newPosition.positionCoordinates(for: frame, dimensions: markerViewDimensions)
-            animateAddressTo(animationPoint, for: marker)
-            return newPosition
-        }
-        return nil
-    }
-    
-    func checkForIntersections(_ pickupAddrFrame: CGRect, _ pickupPinFrame: CGRect,
-                               _ dropoffAddrFrame: CGRect, _ dropoffPinFrame: CGRect) {
+    func shouldAnimateAddressViews(_ pickupAddrFrame: CGRect, _ pickupPinFrame: CGRect,
+                                   _ dropoffAddrFrame: CGRect, _ dropoffPinFrame: CGRect) -> Bool {
         
         if framesIntersect(pickupPinFrame, dropoffAddrFrame) ||
             framesIntersect(dropoffPinFrame, pickupAddrFrame) ||
             framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
             
-            var animationPoint: CGPoint = CGPoint.zero
-            
-            if aboveMarkerPin == pickup && pickupAddrPosition != .topLeft && pickupAddrPosition != .topRight {
-                var newPosition = getVerticalDiametricalPosition(pickupAddrPosition)
-                
-                if let newFrame = willGetOffBounds(pickupAddrFrame, pickupAddrPosition, newPosition) {
-                    newPosition = getHorizontalDiametricalPosition(pickupAddrPosition)
-                    animationPoint = newPosition.positionCoordinates(for: newFrame, dimensions: markerViewDimensions)
-                }
-                
-                animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
-                animateAddressTo(animationPoint, for: pickup)
-                pickupAddrPosition = newPosition
-            }
-            
-            if aboveMarkerPin == pickup && dropoffAddrPosition != .bottomRight && dropoffAddrPosition != .bottomLeft {
-                var newPosition = getVerticalDiametricalPosition(dropoffAddrPosition)
-                
-                if let newFrame = willGetOffBounds(dropoffAddrFrame, dropoffAddrPosition, newPosition) {
-                    newPosition = getHorizontalDiametricalPosition(dropoffAddrPosition)
-                    animationPoint = newPosition.positionCoordinates(for: newFrame, dimensions: markerViewDimensions)
-                }
-                
-                animationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
-                animateAddressTo(animationPoint, for: dropoff)
-                dropoffAddrPosition = newPosition
-            }
-            
-            if aboveMarkerPin == dropoff && pickupAddrPosition != .bottomLeft && pickupAddrPosition != .bottomRight {
-                var newPosition = getVerticalDiametricalPosition(pickupAddrPosition)
-                
-                if let newFrame = willGetOffBounds(pickupAddrFrame, pickupAddrPosition, newPosition) {
-                    newPosition = getHorizontalDiametricalPosition(pickupAddrPosition)
-                    animationPoint = newPosition.positionCoordinates(for: newFrame, dimensions: markerViewDimensions)
-                }
-                
-                animationPoint = newPosition.positionCoordinates(for: pickupAddrFrame, dimensions: markerViewDimensions)
-                animateAddressTo(animationPoint, for: pickup)
-                pickupAddrPosition = newPosition
-            }
-            
-            if aboveMarkerPin == dropoff && dropoffAddrPosition != .topRight && dropoffAddrPosition != .topLeft {
-                var newPosition = getVerticalDiametricalPosition(dropoffAddrPosition)
-                
-                if let newFrame = willGetOffBounds(dropoffAddrFrame, dropoffAddrPosition, newPosition) {
-                    newPosition = getHorizontalDiametricalPosition(dropoffAddrPosition)
-                    animationPoint = newPosition.positionCoordinates(for: newFrame, dimensions: markerViewDimensions)
-                }
-                
-                animationPoint = newPosition.positionCoordinates(for: dropoffAddrFrame, dimensions: markerViewDimensions)
-                animateAddressTo(animationPoint, for: dropoff)
-                dropoffAddrPosition = newPosition
-            }
-        }
-    }
-    
-    func willGetOffBounds(_ frame: CGRect, _ currentPosition: Position, _ newPosition: Position) -> CGRect? {
-        let newFrame = getNewAddressFrame(for: frame, currentPosition, newPosition)
-        
-        if self.view.frame.contains(newFrame) {
-            return nil
-        } else {
-            return newFrame
-        }
-    }
-    
-//    func willIntersect(_ frame: CGRect, _ currentPosition: Position, _ newPosition: Position, _ pickupPinFrame: CGRect, _ dropoffPinFrame: CGRect, _ otherFrame: CGRect) {
-//        let newFrame = getNewAddressFrame(for: frame, currentPosition, newPosition)
-//
-//        if framesIntersect(pickupPinFrame, dropoffAddrFrame) || framesIntersect(dropoffPinFrame, pickupAddrFrame) || framesIntersect(newFrame, otherFrame) {
-//
-//        }
-//    }
-    
-    func getAnimationFinalPosition(for currentPosition: Position, _ frame: CGRect) -> Position {
-        
-        let parentViewWidth = self.view.frame.width
-        let parentViewHeight = self.view.frame.height
-        var newPosition: Position = currentPosition
-        
-        if frame.origin.x < 0 && frame.origin.y < 0 {
-            newPosition = .bottomRight
-        } else if (frame.origin.x + frame.width) > parentViewWidth && frame.origin.y < 0 {
-            newPosition = .bottomLeft
-        } else if frame.origin.x < 0 && (frame.origin.y + frame.height) > parentViewHeight {
-            newPosition = .topRight
-        } else if (frame.origin.x + frame.width) > parentViewWidth && (frame.origin.y + frame.height) > parentViewHeight {
-            newPosition = .topLeft
-        } else if frame.origin.y < 0 {
-            if currentPosition == .topLeft {
-                newPosition = .bottomLeft
-            } else if currentPosition == .topRight {
-                newPosition = .bottomRight
-            }
-        } else if (frame.origin.y + frame.height) > parentViewHeight {
-            if currentPosition == .bottomLeft {
-                newPosition = .topLeft
-            } else if currentPosition == .bottomRight {
-                newPosition = .topRight
-            }
-        } else if frame.origin.x < 0 {
-            if currentPosition == .topLeft {
-                newPosition = .topRight
-            } else if currentPosition == .bottomLeft {
-                newPosition = .bottomRight
-            }
-        } else if (frame.origin.x + frame.width) > parentViewWidth {
-            if currentPosition == .topRight {
-                newPosition = .topLeft
-            } else if currentPosition == .bottomRight {
-                newPosition = .bottomLeft
-            }
+            return true
         }
         
-        return newPosition
-    }
-    
-    func getVerticalDiametricalPosition(_ currentPosition: Position) -> Position {
-        switch currentPosition {
-        case .topLeft:
-            return .bottomLeft
-        case .topRight:
-            return .bottomRight
-        case .bottomLeft:
-            return .topLeft
-        case .bottomRight:
-            return .topRight
+        if frameOutOfScreenBounds(pickupAddrFrame) || frameOutOfScreenBounds(dropoffAddrFrame) {
+            return true
         }
+        
+        return false
     }
     
-    func getHorizontalDiametricalPosition(_ currentPosition: Position) -> Position {
-        switch currentPosition {
-        case .topLeft:
-            return .topRight
-        case .topRight:
-            return .topLeft
-        case .bottomLeft:
-            return .bottomRight
-        case .bottomRight:
-            return .bottomLeft
-        }
-    }
-    
-    func animateAddressTo(_ point: CGPoint, for marker: GMSMarker) {
+    func animateAddressTo(_ position: Position, _ frame: CGRect, _ marker: GMSMarker) {
+        
+        let point = position.positionCoordinates(for: frame, dimensions: markerViewDimensions)
+        
         if let backView = marker.iconView {
             let subViews = backView.subviews
             for view in subViews {
@@ -436,7 +288,6 @@ extension CustomMarkerVC: GMSMapViewDelegate {
     }
     
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
-        findAboveMarkerPin(mapView)
-        animateAddressIfNeeded(mapView)
+        animateAddressViewsIfNeeded(mapView)
     }
 }
