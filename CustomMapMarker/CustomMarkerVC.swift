@@ -103,12 +103,14 @@ class CustomMarkerVC: UIViewController {
         addressView.backgroundColor = color
         addressView.addressLabel.text = addressText
         addressView.tag = 2
+        addressView.layer.zPosition = .greatestFiniteMagnitude
         backView.addSubview(addressView)
         
         pinView.backgroundColor = color
         pinView.layer.cornerRadius = 15
         pinView.layer.borderWidth = 2
         pinView.tag = 1
+        pinView.layer.zPosition = .leastNormalMagnitude
         backView.addSubview(pinView)
 //        backView.backgroundColor = UIColor.red
 //        backView.alpha = 0.5
@@ -217,30 +219,66 @@ class CustomMarkerVC: UIViewController {
     
     func animateAddressViewsIfNeeded(_ mapView: GMSMapView) {
         
-        var pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
-        var dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+        let pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+        let dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
         let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
         let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
         
-        var currentPickupAddrPosition: Position = pickupAddrPosition
-        var currentDropoffAddrPosition: Position = dropoffAddrPosition
+        var tempPickupAddrPosition: Position = pickupAddrPosition
+        var tempDropoffAddrPosition: Position = dropoffAddrPosition
+        var tempPickupAddrFrame: CGRect = pickupAddrFrame
+        var tempDropoffAddrFrame: CGRect = dropoffAddrFrame
         
-        if shouldAnimateAddressViews(pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame) {
+        var didFindProperPosition: Bool = false
+        
+        if shouldAnimateAddressViews(tempPickupAddrFrame, pickupPinFrame, tempDropoffAddrFrame, dropoffPinFrame) {
+            
             outerLoop: for newPickupAddrPosition in positionsArray {
-                pickupAddrFrame = getFutureAddressViewFrame(for: pickupAddrFrame, currentPickupAddrPosition, newPickupAddrPosition)
-                currentPickupAddrPosition = newPickupAddrPosition
+                
+                tempPickupAddrFrame = getFutureAddressViewFrame(for: tempPickupAddrFrame, tempPickupAddrPosition, newPickupAddrPosition)
+                tempPickupAddrPosition = newPickupAddrPosition
+                
                 for newDropoffAddrPosition in positionsArray {
-                    dropoffAddrFrame = getFutureAddressViewFrame(for: dropoffAddrFrame, currentDropoffAddrPosition, newDropoffAddrPosition)
-                    currentDropoffAddrPosition = newDropoffAddrPosition
-                    if !shouldAnimateAddressViews(pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame) {
-                        animateAddressTo(newPickupAddrPosition, pickupAddrFrame, pickup)
-                        animateAddressTo(newDropoffAddrPosition, dropoffAddrFrame, dropoff)
+                    
+                    tempDropoffAddrFrame = getFutureAddressViewFrame(for: tempDropoffAddrFrame, tempDropoffAddrPosition, newDropoffAddrPosition)
+                    tempDropoffAddrPosition = newDropoffAddrPosition
+                    
+                    if !shouldAnimateAddressViews(tempPickupAddrFrame, pickupPinFrame, tempDropoffAddrFrame, dropoffPinFrame) {
+                        animateAddressTo(newPickupAddrPosition, tempPickupAddrFrame, pickup)
+                        animateAddressTo(newDropoffAddrPosition, tempDropoffAddrFrame, dropoff)
                         pickupAddrPosition = newPickupAddrPosition
                         dropoffAddrPosition = newDropoffAddrPosition
+                        didFindProperPosition = true
                         break outerLoop
                     }
                 }
             }
+            
+            if !didFindProperPosition {
+                if frameOutOfScreenBounds(pickupAddrFrame) {
+                    let newPosition = getAnimationFinalPosition(for: pickupAddrPosition, pickupAddrFrame)
+                    animateAddressTo(newPosition, pickupAddrFrame, pickup)
+                    pickupAddrPosition = newPosition
+                }
+                
+                if frameOutOfScreenBounds(dropoffAddrFrame) {
+                    let newPosition = getAnimationFinalPosition(for: dropoffAddrPosition, dropoffAddrFrame)
+                    animateAddressTo(newPosition, dropoffAddrFrame, dropoff)
+                    dropoffAddrPosition = newPosition
+                }
+                
+                bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
+            }
+        }
+    }
+    
+    func bringAddrViewToFrontIfNeeded(_ pickupPinFrame: CGRect, _ pickupAddrFrame: CGRect, _ dropoffPinFrame: CGRect, _ dropoffAddrFrame: CGRect) {
+        if framesIntersect(pickupPinFrame, dropoffAddrFrame) {
+            pickup.zIndex = .min
+            dropoff.zIndex = .max
+        } else if framesIntersect(dropoffPinFrame, pickupAddrFrame) {
+            dropoff.zIndex = .min
+            pickup.zIndex = .max
         }
     }
     
@@ -259,6 +297,49 @@ class CustomMarkerVC: UIViewController {
         }
         
         return false
+    }
+    
+    func getAnimationFinalPosition(for currentPosition: Position, _ frame: CGRect) -> Position {
+        
+        let parentViewWidth = self.view.frame.width
+        let parentViewHeight = self.view.frame.height
+        var newPosition: Position = currentPosition
+        
+        if frame.origin.x < 0 && frame.origin.y < 0 {
+            newPosition = .bottomRight
+        } else if (frame.origin.x + frame.width) > parentViewWidth && frame.origin.y < 0 {
+            newPosition = .bottomLeft
+        } else if frame.origin.x < 0 && (frame.origin.y + frame.height) > parentViewHeight {
+            newPosition = .topRight
+        } else if (frame.origin.x + frame.width) > parentViewWidth && (frame.origin.y + frame.height) > parentViewHeight {
+            newPosition = .topLeft
+        } else if frame.origin.y < 0 {
+            if currentPosition == .topLeft {
+                newPosition = .bottomLeft
+            } else if currentPosition == .topRight {
+                newPosition = .bottomRight
+            }
+        } else if (frame.origin.y + frame.height) > parentViewHeight {
+            if currentPosition == .bottomLeft {
+                newPosition = .topLeft
+            } else if currentPosition == .bottomRight {
+                newPosition = .topRight
+            }
+        } else if frame.origin.x < 0 {
+            if currentPosition == .topLeft {
+                newPosition = .topRight
+            } else if currentPosition == .bottomLeft {
+                newPosition = .bottomRight
+            }
+        } else if (frame.origin.x + frame.width) > parentViewWidth {
+            if currentPosition == .topRight {
+                newPosition = .topLeft
+            } else if currentPosition == .bottomRight {
+                newPosition = .bottomLeft
+            }
+        }
+        
+        return newPosition
     }
     
     func animateAddressTo(_ position: Position, _ frame: CGRect, _ marker: GMSMarker) {
