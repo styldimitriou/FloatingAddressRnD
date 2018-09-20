@@ -259,15 +259,17 @@ class CustomMarkerVC: UIViewController {
                     let newPosition = getAnimationFinalPosition(for: pickupAddrPosition, pickupAddrFrame)
                     animateAddressTo(newPosition, pickupAddrFrame, pickup)
                     pickupAddrPosition = newPosition
+                    tempPickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
                 }
                 
                 if frameOutOfScreenBounds(dropoffAddrFrame) {
                     let newPosition = getAnimationFinalPosition(for: dropoffAddrPosition, dropoffAddrFrame)
                     animateAddressTo(newPosition, dropoffAddrFrame, dropoff)
                     dropoffAddrPosition = newPosition
+                    tempDropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
                 }
                 
-                bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
+                bringAddrViewToFrontIfNeeded(pickupPinFrame, tempPickupAddrFrame, dropoffPinFrame, tempDropoffAddrFrame)
             }
         }
     }
