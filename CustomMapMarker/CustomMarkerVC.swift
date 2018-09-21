@@ -76,7 +76,6 @@ class CustomMarkerVC: UIViewController {
         let addressView = loadAddrNiB()
         addressView.addressLabel.text = addressText
         addressView.translatesAutoresizingMaskIntoConstraints = false
-//        let lala = addressView.systemLayoutSizeFitting(UILayoutFittingCompressedSize)
         addressView.layoutIfNeeded()
         let addressViewWidth = addressView.frame.width
         let addressViewHeight = addressView.frame.height
@@ -95,8 +94,8 @@ class CustomMarkerVC: UIViewController {
 //        pinView.clipsToBounds = true
         pinView.frame = CGRect(x: backViewWidth/2 - pinViewWidth/2, y: backViewHeight/2 - pinViewHeight/2, width: pinViewWidth, height: pinViewHeight)
         
-        addressView.layer.cornerRadius = 12
-        addressView.layer.borderWidth = 2
+        addressView.layer.cornerRadius = 8
+        addressView.layer.borderWidth = 1
         addressView.backgroundColor = color
         addressView.tag = 2
         addressView.layer.zPosition = .greatestFiniteMagnitude
@@ -104,12 +103,14 @@ class CustomMarkerVC: UIViewController {
         
         pinView.backgroundColor = color
         pinView.layer.cornerRadius = 15
-        pinView.layer.borderWidth = 2
+        pinView.layer.borderWidth = 1
         pinView.tag = 1
         pinView.layer.zPosition = .leastNormalMagnitude
         backView.addSubview(pinView)
-//        backView.backgroundColor = UIColor.red
-//        backView.alpha = 0.5
+        backView.backgroundColor = UIColor.red
+        backView.alpha = 0.5
+        
+        backView.layoutIfNeeded()
         return backView
     }
     
@@ -363,7 +364,9 @@ class CustomMarkerVC: UIViewController {
                 if view.tag == 2 {
                     UIView.animate(withDuration: 0.5, animations: {
                         view.frame = CGRect(x: point.x, y: point.y, width: view.frame.width, height: view.frame.height)
-                    })
+                    }) { (_) in
+                        view.layoutIfNeeded()
+                    }
                 }
             }
         }
