@@ -33,8 +33,6 @@ class CustomMarkerVC: UIViewController {
     var dropoff: GMSMarker = GMSMarker()
     var pickupAddrPosition: Position!
     var dropoffAddrPosition: Position!
-    var markerViewDimensions: (width: CGFloat, height: CGFloat) = (0.0, 0.0)
-    var aboveMarkerPin: GMSMarker!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,7 +54,7 @@ class CustomMarkerVC: UIViewController {
         pickup.map = mapView
 
         // Creates a second marker
-        dropoff.iconView = markerView("Sina 11", .lightGray)
+        dropoff.iconView = markerView("Mitropoleos 45", .lightGray)
         dropoff.position = CLLocationCoordinate2D(latitude: 37.96591, longitude: 23.73983)
         dropoff.groundAnchor = CGPoint(x: 0.5, y: 0.5)
         dropoffAddrPosition = .topLeft
@@ -75,33 +73,31 @@ class CustomMarkerVC: UIViewController {
     
     func markerView(_ addressText: String, _ color: UIColor) -> UIView {
         
-        var addressView = MarkerAddressView()
-        addressView = loadAddrNiB()
+        let addressView = loadAddrNiB()
+        addressView.addressLabel.text = addressText
+        addressView.translatesAutoresizingMaskIntoConstraints = false
+//        let lala = addressView.systemLayoutSizeFitting(UILayoutFittingCompressedSize)
+        addressView.layoutIfNeeded()
         let addressViewWidth = addressView.frame.width
         let addressViewHeight = addressView.frame.height
         
-        var pinView = MarkerPinView()
-        pinView = loadPinNiB()
+        let pinView = loadPinNiB()
         let pinViewWidth = pinView.frame.width
         let pinViewHeight = pinView.frame.height
         
         let padding: CGFloat = 10.0
+        let backViewWidth = 2 * addressViewWidth + pinViewWidth + padding
+        let backViewHeight = 2 * addressViewHeight + pinViewHeight + padding
         
-        markerViewDimensions.width = 2 * addressViewWidth + pinViewWidth + padding
-        markerViewDimensions.height = 2 * addressViewHeight + pinViewHeight + padding
-        
-        let backView: UIView = UIView(frame: CGRect(x: 0, y: 0, width: markerViewDimensions.width, height: markerViewDimensions.height))
-        addressView.frame = CGRect(x: 0.0, y: 0.0, width: addressViewWidth, height: addressViewHeight)
+        let backView: UIView = UIView(frame: CGRect(x: 0, y: 0, width: backViewWidth, height: backViewHeight))
+//        addressView.frame = CGRect(x: 0.0, y: 0.0, width: addressViewWidth, height: addressViewHeight)
 //        let pinView = UIView(frame: CGRect(x: backViewWidht/2 - 15, y: backViewHeight/2 - 15, width: 30, height: 30))
 //        pinView.clipsToBounds = true
-        pinView.frame = CGRect(x: markerViewDimensions.width/2 - pinViewWidth/2, y: markerViewDimensions.height/2 - pinViewHeight/2, width: pinViewWidth, height: pinViewHeight)
+        pinView.frame = CGRect(x: backViewWidth/2 - pinViewWidth/2, y: backViewHeight/2 - pinViewHeight/2, width: pinViewWidth, height: pinViewHeight)
         
-//        addressView.alpha = 0.9
         addressView.layer.cornerRadius = 12
         addressView.layer.borderWidth = 2
-//        addressView.layer.borderColor = UIColor.green.cgColor
         addressView.backgroundColor = color
-        addressView.addressLabel.text = addressText
         addressView.tag = 2
         addressView.layer.zPosition = .greatestFiniteMagnitude
         backView.addSubview(addressView)
@@ -142,23 +138,25 @@ class CustomMarkerVC: UIViewController {
         }
         
         let markerCenterPoint = mapView.projection.point(for: marker.position)
+        let markerViewWidth = iconView.frame.width
+        let markerViewHeight = iconView.frame.height
         
         var offsetX: CGFloat = 0.0
         var offsetY: CGFloat = 0.0
         
         switch (addressViewFrame.origin.x, addressViewFrame.origin.y) {
         case (0, 0):
-            offsetX -= markerViewDimensions.width/2
-            offsetY -= markerViewDimensions.height/2
-        case (markerViewDimensions.width - addressViewFrame.width, 0):
-            offsetX = markerViewDimensions.width/2 - addressViewFrame.width
-            offsetY -= markerViewDimensions.height/2
-        case (0, markerViewDimensions.height - addressViewFrame.height):
-            offsetX -= markerViewDimensions.width/2
-            offsetY = markerViewDimensions.height/2 - addressViewFrame.height
-        case (markerViewDimensions.width - addressViewFrame.width, markerViewDimensions.height - addressViewFrame.height):
-            offsetX = markerViewDimensions.width/2 - addressViewFrame.width
-            offsetY = markerViewDimensions.height/2 - addressViewFrame.height
+            offsetX -= markerViewWidth/2
+            offsetY -= markerViewHeight/2
+        case (markerViewWidth - addressViewFrame.width, 0):
+            offsetX = markerViewWidth/2 - addressViewFrame.width
+            offsetY -= markerViewHeight/2
+        case (0, markerViewHeight - addressViewFrame.height):
+            offsetX -= markerViewWidth/2
+            offsetY = markerViewHeight/2 - addressViewFrame.height
+        case (markerViewWidth - addressViewFrame.width, markerViewHeight - addressViewFrame.height):
+            offsetX = markerViewWidth/2 - addressViewFrame.width
+            offsetY = markerViewHeight/2 - addressViewFrame.height
         default:
             break
         }
@@ -169,7 +167,7 @@ class CustomMarkerVC: UIViewController {
         return CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
     }
     
-    func getFutureAddressViewFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position) -> CGRect {
+    func getFutureAddressViewFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position, _ markerViewDimensions: (width: CGFloat, height: CGFloat)) -> CGRect {
         
         var backViewOrigin: CGPoint = CGPoint.zero
         var newFrame: CGRect = CGRect.zero
@@ -219,28 +217,33 @@ class CustomMarkerVC: UIViewController {
     
     func animateAddressViewsIfNeeded(_ mapView: GMSMapView) {
         
+        guard let pickupIconView = pickup.iconView, let dropoffIconView = dropoff.iconView else {
+            return
+        }
+        
         let pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
         let dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
         let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
         let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
+        let pickupViewDimensions = (pickupIconView.frame.width, pickupIconView.frame.height)
+        let dropoffViewDimensions = (dropoffIconView.frame.width, dropoffIconView.frame.height)
         
         var tempPickupAddrPosition: Position = pickupAddrPosition
         var tempDropoffAddrPosition: Position = dropoffAddrPosition
         var tempPickupAddrFrame: CGRect = pickupAddrFrame
         var tempDropoffAddrFrame: CGRect = dropoffAddrFrame
-        
         var didFindProperPosition: Bool = false
         
         if shouldAnimateAddressViews(tempPickupAddrFrame, pickupPinFrame, tempDropoffAddrFrame, dropoffPinFrame) {
             
             outerLoop: for newPickupAddrPosition in positionsArray {
                 
-                tempPickupAddrFrame = getFutureAddressViewFrame(for: tempPickupAddrFrame, tempPickupAddrPosition, newPickupAddrPosition)
+                tempPickupAddrFrame = getFutureAddressViewFrame(for: tempPickupAddrFrame, tempPickupAddrPosition, newPickupAddrPosition, pickupViewDimensions)
                 tempPickupAddrPosition = newPickupAddrPosition
                 
                 for newDropoffAddrPosition in positionsArray {
                     
-                    tempDropoffAddrFrame = getFutureAddressViewFrame(for: tempDropoffAddrFrame, tempDropoffAddrPosition, newDropoffAddrPosition)
+                    tempDropoffAddrFrame = getFutureAddressViewFrame(for: tempDropoffAddrFrame, tempDropoffAddrPosition, newDropoffAddrPosition, dropoffViewDimensions)
                     tempDropoffAddrPosition = newDropoffAddrPosition
                     
                     if !shouldAnimateAddressViews(tempPickupAddrFrame, pickupPinFrame, tempDropoffAddrFrame, dropoffPinFrame) {
@@ -345,6 +348,12 @@ class CustomMarkerVC: UIViewController {
     }
     
     func animateAddressTo(_ position: Position, _ frame: CGRect, _ marker: GMSMarker) {
+        
+        guard let iconView = marker.iconView else {
+            return
+        }
+        
+        let markerViewDimensions = (iconView.frame.width, iconView.frame.height)
         
         let point = position.positionCoordinates(for: frame, dimensions: markerViewDimensions)
         
