@@ -46,14 +46,14 @@ class CustomMarkerVC: UIViewController {
         mapView.settings.tiltGestures = false
         self.view = mapView
         
-        // Creates a marker in the center of the map.
+        // Creates pickup marker
         pickup.iconView = markerView("Sina 11", .orange)
         pickup.position = CLLocationCoordinate2D(latitude: 37.98591, longitude: 23.72983)
         pickup.groundAnchor = CGPoint(x: 0.5, y: 0.5)
         pickupAddrPosition = .topLeft
         pickup.map = mapView
 
-        // Creates a second marker
+        // Creates dropoff marker
         dropoff.iconView = markerView("Mitropoleos 45", .lightGray)
         dropoff.position = CLLocationCoordinate2D(latitude: 37.96591, longitude: 23.73983)
         dropoff.groundAnchor = CGPoint(x: 0.5, y: 0.5)
@@ -74,13 +74,12 @@ class CustomMarkerVC: UIViewController {
     func markerView(_ addressText: String, _ color: UIColor) -> UIView {
         
         let addressView = loadAddrNiB()
-        addressView.addressLabel.text = addressText
-        addressView.translatesAutoresizingMaskIntoConstraints = false
-        addressView.layoutIfNeeded()
+        addressView.setupView(addressText, color)
         let addressViewWidth = addressView.frame.width
         let addressViewHeight = addressView.frame.height
         
         let pinView = loadPinNiB()
+        pinView.setupView(color)
         let pinViewWidth = pinView.frame.width
         let pinViewHeight = pinView.frame.height
         
@@ -89,28 +88,14 @@ class CustomMarkerVC: UIViewController {
         let backViewHeight = 2 * addressViewHeight + pinViewHeight + padding
         
         let backView: UIView = UIView(frame: CGRect(x: 0, y: 0, width: backViewWidth, height: backViewHeight))
-//        addressView.frame = CGRect(x: 0.0, y: 0.0, width: addressViewWidth, height: addressViewHeight)
-//        let pinView = UIView(frame: CGRect(x: backViewWidht/2 - 15, y: backViewHeight/2 - 15, width: 30, height: 30))
-//        pinView.clipsToBounds = true
         pinView.frame = CGRect(x: backViewWidth/2 - pinViewWidth/2, y: backViewHeight/2 - pinViewHeight/2, width: pinViewWidth, height: pinViewHeight)
         
-        addressView.layer.cornerRadius = 8
-        addressView.layer.borderWidth = 1
-        addressView.backgroundColor = color
-        addressView.tag = 2
-        addressView.layer.zPosition = .greatestFiniteMagnitude
         backView.addSubview(addressView)
-        
-        pinView.backgroundColor = color
-        pinView.layer.cornerRadius = 15
-        pinView.layer.borderWidth = 1
-        pinView.tag = 1
-        pinView.layer.zPosition = .leastNormalMagnitude
         backView.addSubview(pinView)
+        backView.layoutIfNeeded()
 //        backView.backgroundColor = UIColor.red
 //        backView.alpha = 0.5
         
-        backView.layoutIfNeeded()
         return backView
     }
     
@@ -359,16 +344,11 @@ class CustomMarkerVC: UIViewController {
         
         let point = position.positionCoordinates(for: frame, dimensions: markerViewDimensions)
         
-        if let backView = marker.iconView {
-            let subViews = backView.subviews
-            for view in subViews {
-                if view.tag == 2 {
-                    UIView.animate(withDuration: 0.5, animations: {
-                        view.frame = CGRect(x: point.x, y: point.y, width: view.frame.width, height: view.frame.height)
-                    }) { (_) in
-                        
-                    }
-                }
+        if let backView = marker.iconView, let addressView = backView.subviews.first {
+            UIView.animate(withDuration: 0.5, animations: {
+                addressView.frame = CGRect(x: point.x, y: point.y, width: addressView.frame.width, height: addressView.frame.height)
+            }) { (_) in
+                
             }
         }
     }
