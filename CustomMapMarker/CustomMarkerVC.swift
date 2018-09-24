@@ -165,7 +165,9 @@ class CustomMarkerVC: UIViewController {
         let addressViewOriginX = markerCenterPoint.x + offsetX
         let addressViewOriginY = markerCenterPoint.y + offsetY
         
-        return CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
+        let frame = CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
+        print("Respective Frame: \(frame)")
+        return frame
     }
     
     func getFutureAddressViewFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position, _ markerViewDimensions: (width: CGFloat, height: CGFloat)) -> CGRect {
@@ -200,7 +202,7 @@ class CustomMarkerVC: UIViewController {
         case .bottomRight:
             newFrame = CGRect(x: backViewOrigin.x + (markerViewDimensions.width - currentFrame.width), y: backViewOrigin.y + (markerViewDimensions.height - currentFrame.height), width: currentFrame.width, height: currentFrame.height)
         }
-        
+        print("New Frame: \(newFrame)")
         return newFrame
     }
     
@@ -226,6 +228,9 @@ class CustomMarkerVC: UIViewController {
         let dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
         let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
         let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
+        print("Pickup Pin Frame: \(pickupPinFrame)")
+        print("Dropoff Pin Frame: \(dropoffPinFrame)")
+        
         let pickupViewDimensions = (pickupIconView.frame.width, pickupIconView.frame.height)
         let dropoffViewDimensions = (dropoffIconView.frame.width, dropoffIconView.frame.height)
         
