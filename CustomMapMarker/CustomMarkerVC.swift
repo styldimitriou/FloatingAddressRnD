@@ -107,8 +107,8 @@ class CustomMarkerVC: UIViewController {
         pinView.tag = 1
         pinView.layer.zPosition = .leastNormalMagnitude
         backView.addSubview(pinView)
-        backView.backgroundColor = UIColor.red
-        backView.alpha = 0.5
+//        backView.backgroundColor = UIColor.red
+//        backView.alpha = 0.5
         
         backView.layoutIfNeeded()
         return backView
@@ -145,29 +145,27 @@ class CustomMarkerVC: UIViewController {
         var offsetX: CGFloat = 0.0
         var offsetY: CGFloat = 0.0
         
-        switch (addressViewFrame.origin.x, addressViewFrame.origin.y) {
-        case (0, 0):
+        let currentPosition: Position = marker == pickup ? pickupAddrPosition : dropoffAddrPosition
+        
+        switch currentPosition {
+        case .topLeft:
             offsetX -= markerViewWidth/2
             offsetY -= markerViewHeight/2
-        case (markerViewWidth - addressViewFrame.width, 0):
+        case .topRight:
             offsetX = markerViewWidth/2 - addressViewFrame.width
             offsetY -= markerViewHeight/2
-        case (0, markerViewHeight - addressViewFrame.height):
+        case .bottomLeft:
             offsetX -= markerViewWidth/2
             offsetY = markerViewHeight/2 - addressViewFrame.height
-        case (markerViewWidth - addressViewFrame.width, markerViewHeight - addressViewFrame.height):
+        case .bottomRight:
             offsetX = markerViewWidth/2 - addressViewFrame.width
             offsetY = markerViewHeight/2 - addressViewFrame.height
-        default:
-            break
         }
         
         let addressViewOriginX = markerCenterPoint.x + offsetX
         let addressViewOriginY = markerCenterPoint.y + offsetY
         
-        let frame = CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
-        print("Respective Frame: \(frame)")
-        return frame
+        return CGRect(x: addressViewOriginX, y: addressViewOriginY, width: addressViewFrame.width, height: addressViewFrame.height)
     }
     
     func getFutureAddressViewFrame(for currentFrame: CGRect, _ currentPosition: Position, _ newPosition: Position, _ markerViewDimensions: (width: CGFloat, height: CGFloat)) -> CGRect {
@@ -202,7 +200,7 @@ class CustomMarkerVC: UIViewController {
         case .bottomRight:
             newFrame = CGRect(x: backViewOrigin.x + (markerViewDimensions.width - currentFrame.width), y: backViewOrigin.y + (markerViewDimensions.height - currentFrame.height), width: currentFrame.width, height: currentFrame.height)
         }
-        print("New Frame: \(newFrame)")
+
         return newFrame
     }
     
@@ -228,8 +226,6 @@ class CustomMarkerVC: UIViewController {
         let dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
         let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
         let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
-        print("Pickup Pin Frame: \(pickupPinFrame)")
-        print("Dropoff Pin Frame: \(dropoffPinFrame)")
         
         let pickupViewDimensions = (pickupIconView.frame.width, pickupIconView.frame.height)
         let dropoffViewDimensions = (dropoffIconView.frame.width, dropoffIconView.frame.height)
@@ -370,7 +366,7 @@ class CustomMarkerVC: UIViewController {
                     UIView.animate(withDuration: 0.5, animations: {
                         view.frame = CGRect(x: point.x, y: point.y, width: view.frame.width, height: view.frame.height)
                     }) { (_) in
-                        view.layoutIfNeeded()
+                        
                     }
                 }
             }
