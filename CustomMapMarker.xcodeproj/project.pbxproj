@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E7307BDE215A44A700BB6EBA /* beat-iconfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E7307BDD215A43BE00BB6EBA /* beat-iconfont.ttf */; };
 		E750F4D0214A81AE008DA01E /* MarkerPinView.xib in Resources */ = {isa = PBXBuildFile; fileRef = E750F4CF214A81AE008DA01E /* MarkerPinView.xib */; };
 		E750F4D2214A81DA008DA01E /* MarkerPinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E750F4D1214A81DA008DA01E /* MarkerPinView.swift */; };
 		E76E6C642137F78C002DCFB0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E76E6C632137F78C002DCFB0 /* AppDelegate.swift */; };
@@ -23,6 +24,7 @@
 		5EF3BCE3FB4D6C5F60C4DE3C /* Pods-CustomMapMarker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CustomMapMarker.debug.xcconfig"; path = "Pods/Target Support Files/Pods-CustomMapMarker/Pods-CustomMapMarker.debug.xcconfig"; sourceTree = "<group>"; };
 		6F0E89A1F08FE9FBE4B1F02E /* Pods-CustomMapMarker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CustomMapMarker.release.xcconfig"; path = "Pods/Target Support Files/Pods-CustomMapMarker/Pods-CustomMapMarker.release.xcconfig"; sourceTree = "<group>"; };
 		AC9E1432895E46A8D4329D60 /* Pods_CustomMapMarker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CustomMapMarker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7307BDD215A43BE00BB6EBA /* beat-iconfont.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "beat-iconfont.ttf"; sourceTree = "<group>"; };
 		E750F4CF214A81AE008DA01E /* MarkerPinView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MarkerPinView.xib; sourceTree = "<group>"; };
 		E750F4D1214A81DA008DA01E /* MarkerPinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerPinView.swift; sourceTree = "<group>"; };
 		E76E6C602137F78C002DCFB0 /* CustomMapMarker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CustomMapMarker.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +90,7 @@
 				E76E6C79213820A6002DCFB0 /* MarkerAddressView.swift */,
 				E750F4CF214A81AE008DA01E /* MarkerPinView.xib */,
 				E750F4D1214A81DA008DA01E /* MarkerPinView.swift */,
+				E7307BDD215A43BE00BB6EBA /* beat-iconfont.ttf */,
 			);
 			path = CustomMapMarker;
 			sourceTree = "<group>";
@@ -134,6 +137,7 @@
 				TargetAttributes = {
 					E76E6C5F2137F78C002DCFB0 = {
 						CreatedOnToolsVersion = 9.4.1;
+						LastSwiftMigration = 1000;
 					};
 				};
 			};
@@ -164,6 +168,7 @@
 				E76E6C6B2137F78E002DCFB0 /* Assets.xcassets in Resources */,
 				E76E6C692137F78C002DCFB0 /* Main.storyboard in Resources */,
 				E750F4D0214A81AE008DA01E /* MarkerPinView.xib in Resources */,
+				E7307BDE215A44A700BB6EBA /* beat-iconfont.ttf in Resources */,
 				E76E6C7621381ED6002DCFB0 /* MarkerAddressView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -373,7 +378,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.test.CustomMapMarker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -392,7 +397,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.test.CustomMapMarker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

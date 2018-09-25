@@ -16,13 +16,14 @@ class MarkerAddressView: UIView {
         return UINib(nibName: "MarkerAddressView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
     }
     
-    func setupView(_ addressText: String, _ color: UIColor) {
+    func setupView(_ addressText: String) {
         self.addressLabel.text = addressText
         self.translatesAutoresizingMaskIntoConstraints = false
         self.layoutIfNeeded()
+        self.layer.borderColor = UIColor(red: 0.0, green: 0.0, blue: 40.0 / 255.0, alpha: 1.0).cgColor
         self.layer.cornerRadius = 8
         self.layer.borderWidth = 1
-        self.backgroundColor = color
-        self.layer.zPosition = .greatestFiniteMagnitude
+        self.backgroundColor = .white
+//        self.layer.zPosition = .greatestFiniteMagnitude
     }
 }

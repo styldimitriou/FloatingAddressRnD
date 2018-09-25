@@ -14,10 +14,7 @@ class MarkerPinView: UIView {
         return UINib(nibName: "MarkerPinView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
     }
     
-    func setupView(_ color: UIColor) {
-        self.backgroundColor = color
-        self.layer.cornerRadius = 15
-        self.layer.borderWidth = 1
-        self.layer.zPosition = .leastNormalMagnitude
+    func setupView() {
+//        self.layer.zPosition = .leastNormalMagnitude
     }
 }

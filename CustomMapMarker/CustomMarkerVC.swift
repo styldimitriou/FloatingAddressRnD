@@ -33,10 +33,12 @@ class CustomMarkerVC: UIViewController {
     var dropoff: GMSMarker = GMSMarker()
     var pickupAddrPosition: Position!
     var dropoffAddrPosition: Position!
+    var topConstraint: NSLayoutConstraint!
+    var leadingConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         let camera = GMSCameraPosition.camera(withLatitude: 37.98591, longitude: 23.72983, zoom: 14.0)
         let mapView = GMSMapView.map(withFrame: CGRect.zero, camera: camera)
         mapView.camera = camera
@@ -45,16 +47,23 @@ class CustomMarkerVC: UIViewController {
         mapView.settings.allowScrollGesturesDuringRotateOrZoom = false
         mapView.settings.tiltGestures = false
         self.view = mapView
-        
+
         // Creates pickup marker
-        pickup.iconView = markerView("Sina 11", .orange)
+        let pickupView = markerView("Sina 11")
+        pickupView.widthAnchor.constraint(equalToConstant: pickupView.frame.width).isActive = true
+        pickupView.heightAnchor.constraint(equalToConstant: pickupView.frame.height).isActive = true
+        pickup.iconView = pickupView
+        pickup.tracksViewChanges = true
         pickup.position = CLLocationCoordinate2D(latitude: 37.98591, longitude: 23.72983)
         pickup.groundAnchor = CGPoint(x: 0.5, y: 0.5)
         pickupAddrPosition = .topLeft
         pickup.map = mapView
 
         // Creates dropoff marker
-        dropoff.iconView = markerView("Mitropoleos 45", .lightGray)
+        let dropoffView = markerView("Mitropoleos 45")
+        dropoffView.widthAnchor.constraint(equalToConstant: dropoffView.frame.width).isActive = true
+        dropoffView.heightAnchor.constraint(equalToConstant: dropoffView.frame.height).isActive = true
+        dropoff.iconView = dropoffView
         dropoff.position = CLLocationCoordinate2D(latitude: 37.96591, longitude: 23.73983)
         dropoff.groundAnchor = CGPoint(x: 0.5, y: 0.5)
         dropoffAddrPosition = .topLeft
@@ -71,15 +80,15 @@ class CustomMarkerVC: UIViewController {
         return pinView
     }
     
-    func markerView(_ addressText: String, _ color: UIColor) -> UIView {
+    func markerView(_ addressText: String) -> UIView {
         
         let addressView = loadAddrNiB()
-        addressView.setupView(addressText, color)
+        addressView.setupView(addressText)
         let addressViewWidth = addressView.frame.width
         let addressViewHeight = addressView.frame.height
         
         let pinView = loadPinNiB()
-        pinView.setupView(color)
+//        pinView.setupView()
         let pinViewWidth = pinView.frame.width
         let pinViewHeight = pinView.frame.height
         
@@ -88,13 +97,22 @@ class CustomMarkerVC: UIViewController {
         let backViewHeight = 2 * addressViewHeight + pinViewHeight + padding
         
         let backView: UIView = UIView(frame: CGRect(x: 0, y: 0, width: backViewWidth, height: backViewHeight))
-        pinView.frame = CGRect(x: backViewWidth/2 - pinViewWidth/2, y: backViewHeight/2 - pinViewHeight/2, width: pinViewWidth, height: pinViewHeight)
         
         backView.addSubview(addressView)
         backView.addSubview(pinView)
         backView.layoutIfNeeded()
 //        backView.backgroundColor = UIColor.red
 //        backView.alpha = 0.5
+        
+        backView.translatesAutoresizingMaskIntoConstraints = false
+        topConstraint = addressView.topAnchor.constraint(equalTo: backView.topAnchor, constant: 0)
+        topConstraint.isActive = true
+        leadingConstraint = addressView.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 0)
+        leadingConstraint.isActive = true
+        pinView.translatesAutoresizingMaskIntoConstraints = false
+        pinView.centerXAnchor.constraint(equalTo: backView.centerXAnchor, constant: 0).isActive = true
+        pinView.centerYAnchor.constraint(equalTo: backView.centerYAnchor, constant: 0).isActive = true
+        
         
         return backView
     }
@@ -347,8 +365,13 @@ class CustomMarkerVC: UIViewController {
         if let backView = marker.iconView, let addressView = backView.subviews.first {
             UIView.animate(withDuration: 0.5, animations: {
                 addressView.frame = CGRect(x: point.x, y: point.y, width: addressView.frame.width, height: addressView.frame.height)
+//                self.topConstraint.constant = point.y
+//                self.leadingConstraint.constant = point.x
+//                backView.layoutIfNeeded()
             }) { (_) in
-                
+                print(self.topConstraint.constant)
+                print(self.leadingConstraint.constant)
+                print(addressView.frame)
             }
         }
     }
