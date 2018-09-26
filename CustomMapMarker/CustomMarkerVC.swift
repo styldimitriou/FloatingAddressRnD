@@ -9,23 +9,6 @@
 import UIKit
 import GoogleMaps
 
-enum Position: String {
-    case topLeft, topRight, bottomLeft, bottomRight
-    
-    func positionCoordinates(for addressViewFrame: CGRect, dimensions: (width: CGFloat, height: CGFloat)) -> CGPoint {
-        switch self {
-        case .topLeft:
-            return CGPoint(x: 0.0, y: 0.0)
-        case .topRight:
-            return CGPoint(x: dimensions.width - addressViewFrame.width, y: 0.0)
-        case .bottomLeft:
-            return CGPoint(x: 0.0, y: dimensions.height - addressViewFrame.height)
-        case .bottomRight:
-            return CGPoint(x: dimensions.width - addressViewFrame.width, y: dimensions.height - addressViewFrame.height)
-        }
-    }
-}
-
 class CustomMarkerVC: UIViewController {
     
     var positionsArray: [Position] = [.topLeft, .topRight, .bottomLeft, .bottomRight]
@@ -47,70 +30,28 @@ class CustomMarkerVC: UIViewController {
         self.view = mapView
 
         // Creates pickup marker
-        let pickupView = markerView("Sina 11")
-        pickupView.widthAnchor.constraint(equalToConstant: pickupView.frame.width).isActive = true
-        pickupView.heightAnchor.constraint(equalToConstant: pickupView.frame.height).isActive = true
-        pickup.iconView = pickupView
+        pickup.iconView = markerView("Sina 11")
         pickup.tracksViewChanges = true
         pickup.position = CLLocationCoordinate2D(latitude: 37.98591, longitude: 23.72983)
         pickup.groundAnchor = CGPoint(x: 0.5, y: 0.5)
-        pickupAddrPosition = .topLeft
         pickup.map = mapView
 
         // Creates dropoff marker
-        let dropoffView = markerView("Mitropoleos 45")
-        dropoffView.widthAnchor.constraint(equalToConstant: dropoffView.frame.width).isActive = true
-        dropoffView.heightAnchor.constraint(equalToConstant: dropoffView.frame.height).isActive = true
-        dropoff.iconView = dropoffView
+        dropoff.iconView = markerView("Mitropoleos 45")
         dropoff.position = CLLocationCoordinate2D(latitude: 37.96591, longitude: 23.73983)
         dropoff.groundAnchor = CGPoint(x: 0.5, y: 0.5)
-        dropoffAddrPosition = .topLeft
         dropoff.map = mapView
-    }
-    
-    func loadAddrNiB() -> MarkerAddressView {
-        let addressView = MarkerAddressView.instanceFromNib() as! MarkerAddressView
-        return addressView
-    }
-    
-    func loadPinNiB() -> MarkerPinView {
-        let pinView = MarkerPinView.instanceFromNib() as! MarkerPinView
-        return pinView
+        
+        pickupAddrPosition = .topLeft
+        dropoffAddrPosition = .topLeft
     }
     
     func markerView(_ addressText: String) -> UIView {
         
-        let addressView = loadAddrNiB()
-        addressView.setupView(addressText)
-        let addressViewWidth = addressView.frame.width
-        let addressViewHeight = addressView.frame.height
+        let markerView = MarkerView(addressText)
+        markerView.setupConstraints()
         
-        let pinView = loadPinNiB()
-        pinView.setupView()
-        let pinViewWidth = pinView.frame.width
-        let pinViewHeight = pinView.frame.height
-        
-        let padding: CGFloat = 10.0
-        let backViewWidth = 2 * addressViewWidth + pinViewWidth + padding
-        let backViewHeight = 2 * addressViewHeight + pinViewHeight + padding
-        
-        let backView: UIView = UIView(frame: CGRect(x: 0, y: 0, width: backViewWidth, height: backViewHeight))
-        
-        backView.addSubview(addressView)
-        backView.addSubview(pinView)
-        backView.layoutIfNeeded()
-//        backView.backgroundColor = UIColor.red
-//        backView.alpha = 0.5
-        
-        backView.translatesAutoresizingMaskIntoConstraints = false
-        addressView.topAnchor.constraint(equalTo: backView.topAnchor, constant: 0).isActive = true
-        addressView.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 0).isActive = true
-        pinView.translatesAutoresizingMaskIntoConstraints = false
-        pinView.centerXAnchor.constraint(equalTo: backView.centerXAnchor, constant: 0).isActive = true
-        pinView.centerYAnchor.constraint(equalTo: backView.centerYAnchor, constant: 0).isActive = true
-        
-        
-        return backView
+        return markerView
     }
     
     func frameOutOfBounds(_ frame: CGRect) -> Bool {
