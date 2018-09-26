@@ -33,8 +33,6 @@ class CustomMarkerVC: UIViewController {
     var dropoff: GMSMarker = GMSMarker()
     var pickupAddrPosition: Position!
     var dropoffAddrPosition: Position!
-    var topConstraint: NSLayoutConstraint!
-    var leadingConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -88,7 +86,7 @@ class CustomMarkerVC: UIViewController {
         let addressViewHeight = addressView.frame.height
         
         let pinView = loadPinNiB()
-//        pinView.setupView()
+        pinView.setupView()
         let pinViewWidth = pinView.frame.width
         let pinViewHeight = pinView.frame.height
         
@@ -105,10 +103,8 @@ class CustomMarkerVC: UIViewController {
 //        backView.alpha = 0.5
         
         backView.translatesAutoresizingMaskIntoConstraints = false
-        topConstraint = addressView.topAnchor.constraint(equalTo: backView.topAnchor, constant: 0)
-        topConstraint.isActive = true
-        leadingConstraint = addressView.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 0)
-        leadingConstraint.isActive = true
+        addressView.topAnchor.constraint(equalTo: backView.topAnchor, constant: 0).isActive = true
+        addressView.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 0).isActive = true
         pinView.translatesAutoresizingMaskIntoConstraints = false
         pinView.centerXAnchor.constraint(equalTo: backView.centerXAnchor, constant: 0).isActive = true
         pinView.centerYAnchor.constraint(equalTo: backView.centerYAnchor, constant: 0).isActive = true
@@ -117,7 +113,7 @@ class CustomMarkerVC: UIViewController {
         return backView
     }
     
-    func frameOutOfScreenBounds(_ frame: CGRect) -> Bool {
+    func frameOutOfBounds(_ frame: CGRect) -> Bool {
         
         if self.view.frame.contains(frame) {
             return false
@@ -237,11 +233,10 @@ class CustomMarkerVC: UIViewController {
         var tempDropoffAddrPosition: Position = dropoffAddrPosition
         var tempPickupAddrFrame: CGRect = pickupAddrFrame
         var tempDropoffAddrFrame: CGRect = dropoffAddrFrame
-        var didFindProperPosition: Bool = false
         
         if shouldAnimateAddressViews(tempPickupAddrFrame, pickupPinFrame, tempDropoffAddrFrame, dropoffPinFrame) {
             
-            outerLoop: for newPickupAddrPosition in positionsArray {
+            for newPickupAddrPosition in positionsArray {
                 
                 tempPickupAddrFrame = getFutureAddressViewFrame(for: tempPickupAddrFrame, tempPickupAddrPosition, newPickupAddrPosition, pickupViewDimensions)
                 tempPickupAddrPosition = newPickupAddrPosition
@@ -256,28 +251,33 @@ class CustomMarkerVC: UIViewController {
                         animateAddressTo(newDropoffAddrPosition, tempDropoffAddrFrame, dropoff)
                         pickupAddrPosition = newPickupAddrPosition
                         dropoffAddrPosition = newDropoffAddrPosition
-                        didFindProperPosition = true
-                        break outerLoop
+                        return
                     }
                 }
             }
             
-            if !didFindProperPosition {
-                if frameOutOfScreenBounds(pickupAddrFrame) {
-                    let newPosition = getAnimationFinalPosition(for: pickupAddrPosition, pickupAddrFrame)
-                    animateAddressTo(newPosition, pickupAddrFrame, pickup)
-                    pickupAddrPosition = newPosition
-                    tempPickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+            if frameOutOfBounds(pickupAddrFrame) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                    pickupAddrPosition = newAddrPosition
+                    return
+                }
+            }
+
+            if frameOutOfBounds(dropoffAddrFrame) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame, pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                    dropoffAddrPosition = newAddrPosition
+                    return
+                }
+            }
+
+            if framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                    pickupAddrPosition = newAddrPosition
                 }
                 
-                if frameOutOfScreenBounds(dropoffAddrFrame) {
-                    let newPosition = getAnimationFinalPosition(for: dropoffAddrPosition, dropoffAddrFrame)
-                    animateAddressTo(newPosition, dropoffAddrFrame, dropoff)
-                    dropoffAddrPosition = newPosition
-                    tempDropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame, pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                    dropoffAddrPosition = newAddrPosition
                 }
-                
-                bringAddrViewToFrontIfNeeded(pickupPinFrame, tempPickupAddrFrame, dropoffPinFrame, tempDropoffAddrFrame)
             }
         }
     }
@@ -302,11 +302,28 @@ class CustomMarkerVC: UIViewController {
             return true
         }
         
-        if frameOutOfScreenBounds(pickupAddrFrame) || frameOutOfScreenBounds(dropoffAddrFrame) {
+        if frameOutOfBounds(pickupAddrFrame) || frameOutOfBounds(dropoffAddrFrame) {
             return true
         }
         
         return false
+    }
+    
+    func animateAddressViewIfPossible(for marker: GMSMarker, _ firstAddrFrame: CGRect, _ firstPinFrame: CGRect, _ secondAddrFrame: CGRect, _ secondPinFrame: CGRect, _ currentPosition: Position, _ markerDimensions: (CGFloat, CGFloat)) -> Position? {
+        var tempFirstAddrFrame = firstAddrFrame
+        let tempSecondAddrFrame = secondAddrFrame
+        var tempAddrPosition = currentPosition
+        
+        for newAddrPosition in positionsArray {
+            tempFirstAddrFrame = getFutureAddressViewFrame(for: tempFirstAddrFrame, tempAddrPosition, newAddrPosition, markerDimensions)
+            tempAddrPosition = newAddrPosition
+            if !frameOutOfBounds(tempFirstAddrFrame) && !framesIntersect(tempFirstAddrFrame, tempSecondAddrFrame) {
+                animateAddressTo(newAddrPosition, tempFirstAddrFrame, marker)
+                bringAddrViewToFrontIfNeeded(firstPinFrame, tempFirstAddrFrame, secondPinFrame, tempSecondAddrFrame)
+                return newAddrPosition
+            }
+        }
+        return nil
     }
     
     func getAnimationFinalPosition(for currentPosition: Position, _ frame: CGRect) -> Position {
@@ -365,13 +382,8 @@ class CustomMarkerVC: UIViewController {
         if let backView = marker.iconView, let addressView = backView.subviews.first {
             UIView.animate(withDuration: 0.5, animations: {
                 addressView.frame = CGRect(x: point.x, y: point.y, width: addressView.frame.width, height: addressView.frame.height)
-//                self.topConstraint.constant = point.y
-//                self.leadingConstraint.constant = point.x
-//                backView.layoutIfNeeded()
             }) { (_) in
-                print(self.topConstraint.constant)
-                print(self.leadingConstraint.constant)
-                print(addressView.frame)
+                
             }
         }
     }

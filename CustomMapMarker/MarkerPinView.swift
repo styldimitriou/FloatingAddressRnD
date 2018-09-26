@@ -15,6 +15,6 @@ class MarkerPinView: UIView {
     }
     
     func setupView() {
-//        self.layer.zPosition = .leastNormalMagnitude
+        self.layer.zPosition = .leastNormalMagnitude
     }
 }

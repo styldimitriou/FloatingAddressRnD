@@ -24,6 +24,6 @@ class MarkerAddressView: UIView {
         self.layer.cornerRadius = 8
         self.layer.borderWidth = 1
         self.backgroundColor = .white
-//        self.layer.zPosition = .greatestFiniteMagnitude
+        self.layer.zPosition = .greatestFiniteMagnitude
     }
 }
