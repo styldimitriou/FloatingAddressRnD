@@ -221,8 +221,8 @@ class CustomMarkerVC: UIViewController {
             return
         }
         
-        let pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
-        let dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+        var pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+        var dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
         let pickupPinFrame = getRespectivePinFrame(mapView, forMarker: pickup)
         let dropoffPinFrame = getRespectivePinFrame(mapView, forMarker: dropoff)
         
@@ -257,26 +257,42 @@ class CustomMarkerVC: UIViewController {
             }
             
             if frameOutOfBounds(pickupAddrFrame) {
-                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame,
+                                                                      dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                    
                     pickupAddrPosition = newAddrPosition
+                    pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+                    bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
                     return
                 }
             }
 
             if frameOutOfBounds(dropoffAddrFrame) {
-                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame, pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame,
+                                                                      pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                    
                     dropoffAddrPosition = newAddrPosition
+                    dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+                    bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
                     return
                 }
             }
 
             if framesIntersect(pickupAddrFrame, dropoffAddrFrame) {
-                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame, dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: pickup, pickupAddrFrame, pickupPinFrame,
+                                                                      dropoffAddrFrame, dropoffPinFrame, pickupAddrPosition, pickupViewDimensions) {
+                    
                     pickupAddrPosition = newAddrPosition
+                    pickupAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: pickup)
+                    bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
                 }
                 
-                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame, pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                if let newAddrPosition = animateAddressViewIfPossible(for: dropoff, dropoffAddrFrame, dropoffPinFrame,
+                                                                      pickupAddrFrame, pickupPinFrame, dropoffAddrPosition, dropoffViewDimensions) {
+                    
                     dropoffAddrPosition = newAddrPosition
+                    dropoffAddrFrame = getRespectiveAddressViewFrame(mapView, forMarker: dropoff)
+                    bringAddrViewToFrontIfNeeded(pickupPinFrame, pickupAddrFrame, dropoffPinFrame, dropoffAddrFrame)
                 }
             }
         }
@@ -309,7 +325,10 @@ class CustomMarkerVC: UIViewController {
         return false
     }
     
-    func animateAddressViewIfPossible(for marker: GMSMarker, _ firstAddrFrame: CGRect, _ firstPinFrame: CGRect, _ secondAddrFrame: CGRect, _ secondPinFrame: CGRect, _ currentPosition: Position, _ markerDimensions: (CGFloat, CGFloat)) -> Position? {
+    func animateAddressViewIfPossible(for marker: GMSMarker, _ firstAddrFrame: CGRect, _ firstPinFrame: CGRect,
+                                      _ secondAddrFrame: CGRect, _ secondPinFrame: CGRect, _ currentPosition: Position,
+                                      _ markerDimensions: (CGFloat, CGFloat)) -> Position? {
+        
         var tempFirstAddrFrame = firstAddrFrame
         let tempSecondAddrFrame = secondAddrFrame
         var tempAddrPosition = currentPosition
@@ -319,7 +338,6 @@ class CustomMarkerVC: UIViewController {
             tempAddrPosition = newAddrPosition
             if !frameOutOfBounds(tempFirstAddrFrame) && !framesIntersect(tempFirstAddrFrame, tempSecondAddrFrame) {
                 animateAddressTo(newAddrPosition, tempFirstAddrFrame, marker)
-                bringAddrViewToFrontIfNeeded(firstPinFrame, tempFirstAddrFrame, secondPinFrame, tempSecondAddrFrame)
                 return newAddrPosition
             }
         }
