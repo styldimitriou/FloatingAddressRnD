@@ -50,7 +50,7 @@ class CustomMarkerVC: UIViewController {
         
         let markerView = MarkerView(addressText)
         markerView.setupConstraints()
-        
+//        markerView.layoutIfNeeded()
         return markerView
     }
     

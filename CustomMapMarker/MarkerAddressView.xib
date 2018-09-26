@@ -8,6 +8,11 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="beat-iconfont.ttf">
+            <string>beat-iconfont</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
@@ -15,23 +20,32 @@
             <rect key="frame" x="0.0" y="0.0" width="143" height="48"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="751" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="59p-gZ-Ve7">
-                    <rect key="frame" x="10" y="10" width="123" height="28"/>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" horizontalCompressionResistancePriority="751" verticalCompressionResistancePriority="751" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="59p-gZ-Ve7">
+                    <rect key="frame" x="10" y="10" width="42" height="28"/>
                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="252" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AU8-dM-WpT">
+                    <rect key="frame" x="66" y="15.5" width="61" height="17.5"/>
+                    <fontDescription key="fontDescription" name="beat-iconfont" family="beat-iconfont" pointSize="17"/>
                     <nil key="textColor"/>
                     <nil key="highlightedColor"/>
                 </label>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="59p-gZ-Ve7" secondAttribute="trailing" constant="10" id="FDh-cQ-w6w"/>
+                <constraint firstItem="AU8-dM-WpT" firstAttribute="centerY" secondItem="59p-gZ-Ve7" secondAttribute="centerY" id="MTr-8A-bHq"/>
                 <constraint firstAttribute="bottom" secondItem="59p-gZ-Ve7" secondAttribute="bottom" constant="10" id="OHU-y7-gr0"/>
+                <constraint firstItem="AU8-dM-WpT" firstAttribute="leading" secondItem="59p-gZ-Ve7" secondAttribute="trailing" constant="14" id="Sjc-8T-18l"/>
                 <constraint firstItem="59p-gZ-Ve7" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="10" id="XW9-BP-OiQ"/>
+                <constraint firstAttribute="trailing" secondItem="AU8-dM-WpT" secondAttribute="trailing" constant="16" id="aPZ-EM-tn4"/>
                 <constraint firstItem="59p-gZ-Ve7" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="10" id="hdB-YJ-LQE"/>
             </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
                 <outlet property="addressLabel" destination="59p-gZ-Ve7" id="TLk-Nw-A30"/>
+                <outlet property="iconFontLabel" destination="AU8-dM-WpT" id="j19-rT-IaE"/>
             </connections>
             <point key="canvasLocation" x="-100.5" y="-134"/>
         </view>

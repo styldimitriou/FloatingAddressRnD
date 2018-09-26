@@ -55,8 +55,8 @@ class MarkerView: UIView {
         self.addSubview(addressView)
         self.addSubview(pinView)
         self.layoutIfNeeded()
-        //        backView.backgroundColor = UIColor.red
-        //        backView.alpha = 0.5
+//        self.backgroundColor = UIColor.red
+//        self.alpha = 0.5
     }
     
     required init?(coder aDecoder: NSCoder) {
