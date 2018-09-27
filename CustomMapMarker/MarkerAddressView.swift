@@ -8,6 +8,9 @@
 
 import UIKit
 
+/**
+ A UIView subclass that consists of two UILabels. It acts like the GMSMarker infoWindow
+ */
 class MarkerAddressView: UIView {
     
     @IBOutlet weak var addressLabel: UILabel!
@@ -17,6 +20,11 @@ class MarkerAddressView: UIView {
         return UINib(nibName: "MarkerAddressView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
     }
     
+    /**
+     Configures the addressView and its subviews properties and sets the required constraints
+     
+     - Parameter addressText: The text to be displayed on the address label
+     */
     func setupView(_ addressText: String) {
         self.addressLabel.text = addressText
         self.iconFontLabel.text = ""

@@ -8,9 +8,24 @@
 
 import UIKit
 
+/**
+    The available positions of an addressView
+ 
+ # Positions
+ - topLeft
+ - topRight
+ - bottomLeft
+ - bottomRight
+ */
 enum Position: String {
     case topLeft, topRight, bottomLeft, bottomRight
     
+    /**
+     - Parameter addressViewFrame: The frame of the addressView
+     - Parameter dimensions: The dimensions (width, height) of the marker's iconView
+     
+     - Returns: A CGPoint of the addressView position origin
+     */
     func positionCoordinates(for addressViewFrame: CGRect, dimensions: (width: CGFloat, height: CGFloat)) -> CGPoint {
         switch self {
         case .topLeft:
@@ -25,6 +40,9 @@ enum Position: String {
     }
 }
 
+/**
+ A UIView subclass that consists of an address view and a pin view
+ */
 class MarkerView: UIView {
     
     var addressView: MarkerAddressView!
@@ -34,16 +52,27 @@ class MarkerView: UIView {
         super.init(frame: frame)
     }
     
+    /**
+     Initializes a new MarkerView
+     
+     - Parameter addressText: The text to be displayed on the addressView label
+     */
     convenience init(_ addressText: String) {
         self.init()
         
+        // Initialize the addressView
         addressView = loadAddrNiB()
         addressView.setupView(addressText)
+        
+        // Get addressView width and height to be used for the MarkerView frame initialization
         let addressViewWidth = addressView.frame.width
         let addressViewHeight = addressView.frame.height
         
+        // Initialize the pinView
         pinView = loadPinNiB()
         pinView.setupView()
+        
+        // Get pinView width and height to be used for the MarkerView frame initialization
         let pinViewWidth = pinView.frame.width
         let pinViewHeight = pinView.frame.height
         
@@ -63,6 +92,9 @@ class MarkerView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /**
+     Sets the constraints of the MarkerView and its subviews (addressView and pinView)
+     */
     func setupConstraints() {
         self.translatesAutoresizingMaskIntoConstraints = false
         
@@ -77,11 +109,21 @@ class MarkerView: UIView {
         self.heightAnchor.constraint(equalToConstant: self.frame.height).isActive = true
     }
     
+    /**
+     Loads an addressView from Nib
+     
+     - Returns: A new addressView
+     */
     func loadAddrNiB() -> MarkerAddressView {
         let addressView = MarkerAddressView.instanceFromNib() as! MarkerAddressView
         return addressView
     }
     
+    /**
+     Loads a pinView from Nib
+     
+     - Returns: A new pinView
+     */
     func loadPinNiB() -> MarkerPinView {
         let pinView = MarkerPinView.instanceFromNib() as! MarkerPinView
         return pinView
