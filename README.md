@@ -32,4 +32,4 @@ Just clone this repo and run ```pod install```
 
 ## License
 
-This is a [Beat](https://thebeat.co/) project and is licensed under the MIT License
+This is a [Beat](https://thebeat.co/) project
