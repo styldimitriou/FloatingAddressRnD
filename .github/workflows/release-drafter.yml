@@ -18,4 +18,11 @@ jobs:
            # config-name: my-config.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  name-template: 'v$NEXT_MINOR_VERSION 🌈'
+  tag-template: 'v$NEXT_MINOR_VERSION'
+  change-template:  '- $TITLE @$AUTHOR (#$NUMBER)'
+  template: |
+    ## Changes
+
+    $CHANGES  
           
