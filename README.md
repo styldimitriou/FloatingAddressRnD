@@ -28,8 +28,5 @@ Just clone this repo and run ```pod install```
 
 ## Authors
 
-**Stelios Dimitriou** - *iOS Developer @ Beat*
+**Stelios Dimitriou** - *iOS Developer*
 
-## License
-
-This is a [Beat](https://thebeat.co/) project
